@@ -45,5 +45,6 @@ int main(void) {
     std::for_each(result.begin(), result.end(), [](char c) { std::cout << std::hex << (int)c; });
     std::cout << "\n";
 
-    // No straightforward way to convert a socket descriptor to std::istream or std::ostream
+    // No straightforward built-in way to convert a socket descriptor to std::istream or std::ostream
+    // However Boost.Asio offers socket stream wrappers https://www.boost.org/doc/libs/latest/doc/html/boost_asio.html
 }
