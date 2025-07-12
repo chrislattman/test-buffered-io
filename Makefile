@@ -13,5 +13,8 @@ rust:
 cpp:
 	g++ -o testio testio.cpp && ./testio
 
+csharp:
+	dotnet run
+
 clean:
-	rm -rf *.class target testio output.bin
+	rm -rf *.class target testio output.bin bin obj

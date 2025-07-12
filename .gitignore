@@ -3,3 +3,6 @@
 target/
 testio
 output.bin
+.DS_Store
+bin/
+obj/
