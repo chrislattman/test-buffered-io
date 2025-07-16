@@ -21,7 +21,7 @@ fn main() {
     println!("File written to successfully.");
 
     let in_memory = b"Hello this is some random text!";
-    let mut byte_input = Cursor::new(in_memory.to_vec());
+    let mut byte_input = Cursor::new(in_memory);
     let mut byte_output = Cursor::new(Vec::<u8>::new());
     process_data(&mut byte_input, &mut byte_output).unwrap();
     println!("Bytes copied successfully.");
