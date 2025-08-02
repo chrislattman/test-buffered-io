@@ -10,13 +10,37 @@ import java.util.stream.IntStream;
 
 public class TestIO {
     private static void processData(InputStream source, OutputStream destination) throws IOException {
-        byte[] buffer = new byte[8192];
+        final int BUF_SIZE = 8192;
+        byte[] buffer = new byte[BUF_SIZE];
         int bytesRead;
-        while ((bytesRead = source.read(buffer)) != -1) {
-            IntStream.range(0, bytesRead).forEach(i -> buffer[i] ^= 0x5a);
+        // Use source.read() if short reads are okay (need to check if bytesRead == -1)
+        while ((bytesRead = source.readNBytes(buffer, 0, BUF_SIZE)) != 0) {
+            for (int i = 0; i < bytesRead; i++) {
+                buffer[i] ^= 0x5a;
+            }
             destination.write(buffer, 0, bytesRead);
             destination.flush();
         }
+
+        // Manual way to prevent short reads until EOF:
+        // while (true) {
+        //     int totalBytesRead = 0;
+        //     while (totalBytesRead < BUF_SIZE) {
+        //         bytesRead = source.read(buffer, totalBytesRead, BUF_SIZE - totalBytesRead);
+        //         if (bytesRead == -1) {
+        //             if (totalBytesRead > 0) {
+        //                 IntStream.range(0, totalBytesRead).forEach(i -> buffer[i] ^= 0x5a);
+        //                 destination.write(buffer, 0, totalBytesRead);
+        //                 destination.flush();
+        //             }
+        //             return;
+        //         }
+        //         totalBytesRead += bytesRead;
+        //     }
+        //     IntStream.range(0, BUF_SIZE).forEach(i -> buffer[i] ^= 0x5a);
+        //     destination.write(buffer);
+        //     destination.flush();
+        // }
     }
 
     public static void main(String[] args) throws IOException {

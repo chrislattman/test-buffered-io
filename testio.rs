@@ -1,17 +1,46 @@
-use std::{fs::File, io::{Cursor, Read, Result, Write}};
+use std::{
+    fs::File,
+    io::{Cursor, Read, Result, Write},
+};
 
 fn process_data<R: Read, W: Write>(source: &mut R, destination: &mut W) -> Result<()> {
-    let mut buffer = [0u8; 8192];
+    const BUF_SIZE: usize = 8192;
+    let mut buffer = [0u8; BUF_SIZE];
+    let mut bytes_read;
     loop {
-        let bytes_read = source.read(&mut buffer)?;
-        if bytes_read == 0 {
-            break;
+        let mut total_bytes_read = 0;
+        while total_bytes_read < BUF_SIZE {
+            bytes_read = source.read(&mut buffer[total_bytes_read..])?;
+            if bytes_read == 0 {
+                if total_bytes_read > 0 {
+                    for x in &mut buffer[..total_bytes_read] {
+                        *x ^= 0x5a;
+                    }
+                    destination.write_all(&buffer[..total_bytes_read])?;
+                    destination.flush()?;
+                }
+                return Ok(());
+            }
+            total_bytes_read += bytes_read;
         }
-        buffer[..bytes_read].iter_mut().for_each(|x| *x ^= 0x5a);
-        destination.write_all(&buffer[..bytes_read])?;
+        for x in &mut buffer {
+            *x ^= 0x5a;
+        }
+        destination.write_all(&buffer)?;
         destination.flush()?;
     }
-    Ok(())
+
+    // If short reads are okay:
+    // loop {
+    //     bytes_read = source.read(&mut buffer)?;
+    //     if bytes_read == 0 {
+    //         break;
+    //     }
+    //     buffer[..bytes_read].iter_mut().for_each(|x| *x ^= 0x5a);
+    //     destination.write_all(&buffer[..bytes_read])?;
+    //     destination.flush()?;
+    // }
+    // Ok(())
 }
 
 fn main() {
@@ -26,7 +55,13 @@ fn main() {
     process_data(&mut byte_input, &mut byte_output).unwrap();
     println!("Bytes copied successfully.");
     let result = byte_output.into_inner();
-    println!("{}", result.iter().map(|b| format!("{:02x}", b)).collect::<String>());
+    println!(
+        "{}",
+        result
+            .iter()
+            .map(|b| format!("{b:02x}"))
+            .collect::<String>()
+    );
 
     // TcpStream already implements std::io::Read and std::io::Write
 }

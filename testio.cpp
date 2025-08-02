@@ -4,23 +4,59 @@
 #include <sstream>
 
 void process_data(std::istream& source, std::ostream& destination) {
-    char buffer[8192];
+    const std::streamsize BUF_SIZE = 8192;
+    char buffer[BUF_SIZE];
+    std::streamsize bytes_read;
     while (true) {
-        source.read(buffer, sizeof(buffer));
-        std::streamsize bytes_read = source.gcount();
-        if (bytes_read == 0) {
-            break;
+        std::streamsize total_bytes_read = 0;
+        while (total_bytes_read < BUF_SIZE) {
+            source.read(buffer, BUF_SIZE);
+            if (!source && !source.eof()) {
+                throw std::runtime_error("Read error");
+            }
+            bytes_read = source.gcount();
+            if (bytes_read == 0) {
+                if (total_bytes_read > 0) {
+                    for (std::streamsize i = 0; i < total_bytes_read; i++) {
+                        buffer[i] ^= 0x5a;
+                    }
+                    destination.write(buffer, total_bytes_read);
+                    if (!destination) {
+                        throw std::runtime_error("Write error");
+                    }
+                    destination.flush();
+                }
+                return;
+            }
+            total_bytes_read += bytes_read;
         }
-        if (!source && !source.eof()) {
-            throw std::runtime_error("Read error");
+        for (std::streamsize i = 0; i < BUF_SIZE; i++) {
+            buffer[i] ^= 0x5a;
         }
-        std::transform(std::begin(buffer), std::begin(buffer) + bytes_read, std::begin(buffer), [](char c) { return c ^ 0x5a; });
-        destination.write(buffer, bytes_read);
+        destination.write(buffer, BUF_SIZE);
         if (!destination) {
             throw std::runtime_error("Write error");
         }
         destination.flush();
     }
+
+    // If short reads are okay:
+    // while (true) {
+    //     source.read(buffer, BUF_SIZE);
+    //     if (!source && !source.eof()) {
+    //         throw std::runtime_error("Read error");
+    //     }
+    //     bytes_read = source.gcount();
+    //     if (bytes_read == 0) {
+    //         break;
+    //     }
+    //     std::transform(std::begin(buffer), std::begin(buffer) + bytes_read, std::begin(buffer), [](char c) { return c ^ 0x5a; });
+    //     destination.write(buffer, bytes_read);
+    //     if (!destination) {
+    //         throw std::runtime_error("Write error");
+    //     }
+    //     destination.flush();
+    // }
 }
 
 int main(void) {

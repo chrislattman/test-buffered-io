@@ -4,17 +4,45 @@ class TestIO
 {
     private static void ProcessData(Stream source, Stream destination)
     {
-        byte[] buffer = new byte[8192];
+        const int BUF_SIZE = 8192;
+        byte[] buffer = new byte[BUF_SIZE];
         int bytesRead;
-        while ((bytesRead = source.Read(buffer, 0, buffer.Length)) > 0)
+        while (true)
         {
-            for (int i = 0; i < bytesRead; i++)
+            int totalBytesRead = 0;
+            while (totalBytesRead < BUF_SIZE)
+            {
+                bytesRead = source.Read(buffer, totalBytesRead, BUF_SIZE - totalBytesRead);
+                if (bytesRead == 0)
+                {
+                    if (totalBytesRead > 0)
+                    {
+                        for (int i = 0; i < totalBytesRead; i++)
+                        {
+                            buffer[i] ^= 0x5A;
+                        }
+                        destination.Write(buffer, 0, totalBytesRead);
+                        destination.Flush();
+                    }
+                    return;
+                }
+                totalBytesRead += bytesRead;
+            }
+            for (int i = 0; i < BUF_SIZE; i++)
             {
                 buffer[i] ^= 0x5A;
             }
-            destination.Write(buffer, 0, bytesRead);
+            destination.Write(buffer);
             destination.Flush();
         }
+
+        // If short reads are okay:
+        // while ((bytesRead = source.Read(buffer)) > 0)
+        // {
+        //     Enumerable.Range(0, bytesRead).ToList().ForEach(i => buffer[i] ^= 0x5A);
+        //     destination.Write(buffer, 0, bytesRead);
+        //     destination.Flush();
+        // }
     }
 
     static void Main(string[] args)

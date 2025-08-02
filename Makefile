@@ -18,3 +18,5 @@ csharp:
 
 clean:
 	rm -rf *.class target testio output.bin bin obj
+
+.PHONY: java python go rust cpp csharp
